@@ -1,9 +1,11 @@
 
 import { useNavigate } from 'react-router-dom';
+import { Card, Typography, Space, Button } from 'antd';
+import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { Note } from '@/types';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { formatDate, truncateText, getStaggeredAnimationClass } from '@/lib/utils';
+import { formatDate, truncateText } from '@/lib/utils';
+
+const { Title, Paragraph, Text } = Typography;
 
 interface NoteItemProps {
   note: Note;
@@ -30,27 +32,25 @@ const NoteItem = ({ note, index, onDelete }: NoteItemProps) => {
 
   return (
     <Card 
-      className={`glass-card cursor-pointer group ${getStaggeredAnimationClass(index, 'slide-up')}`}
+      hoverable
+      style={{ 
+        marginBottom: 16,
+        animation: `fadeIn 0.3s ease-in-out forwards`,
+        animationDelay: `${index * 0.05}s`
+      }}
       onClick={handleView}
+      actions={[
+        <Button key="edit" type="text" icon={<EditOutlined />} onClick={handleEdit}>Edit</Button>,
+        <Button key="delete" type="text" danger icon={<DeleteOutlined />} onClick={handleDelete}>Delete</Button>
+      ]}
     >
-      <CardContent className="p-6">
-        <h3 className="text-xl font-medium mb-2">{note.title}</h3>
-        <p className="text-muted-foreground mb-4">
-          {truncateText(note.content, 150)}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {formatDate(note.updatedAt)}
-        </p>
-      </CardContent>
-      
-      <CardFooter className="px-6 py-4 bg-secondary/50 flex justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-        <Button variant="outline" size="sm" onClick={handleEdit}>
-          Edit
-        </Button>
-        <Button variant="destructive" size="sm" onClick={handleDelete}>
-          Delete
-        </Button>
-      </CardFooter>
+      <Title level={4}>{note.title}</Title>
+      <Paragraph type="secondary">
+        {truncateText(note.content, 150)}
+      </Paragraph>
+      <Text type="secondary" style={{ fontSize: 12 }}>
+        {formatDate(note.updatedAt)}
+      </Text>
     </Card>
   );
 };

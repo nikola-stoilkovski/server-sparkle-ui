@@ -1,20 +1,20 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { notification } from 'antd';
 import Layout from '@/components/Layout';
 import UIRenderer from '@/components/UIRenderer';
 import { api } from '@/lib/api';
 import { Note, UISchema } from '@/types';
 import { formatDate, findComponentById, updateComponentById } from '@/lib/utils';
-import { useToast } from '@/components/ui/use-toast';
 
 const ViewNote = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [note, setNote] = useState<Note | null>(null);
   const [loading, setLoading] = useState(true);
   const [uiSchema, setUiSchema] = useState<UISchema>();
+  const [api, contextHolder] = notification.useNotification();
 
   // Fetch note and UI schema
   useEffect(() => {
@@ -79,10 +79,9 @@ const ViewNote = () => {
         }
       } catch (error) {
         console.error('Error fetching note:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load note. Please try again.",
-          variant: "destructive",
+        api.error({
+          message: 'Error',
+          description: 'Failed to load note. Please try again.',
         });
         navigate('/');
       } finally {
@@ -91,7 +90,7 @@ const ViewNote = () => {
     };
 
     fetchData();
-  }, [id, navigate, toast]);
+  }, [id, navigate]);
 
   // Handle UI actions
   const handleAction = async (action: string, payload?: any) => {
@@ -110,10 +109,9 @@ const ViewNote = () => {
           navigate('/');
         } catch (error) {
           console.error('Error deleting note:', error);
-          toast({
-            title: "Error",
-            description: "Failed to delete note. Please try again.",
-            variant: "destructive",
+          api.error({
+            message: 'Error',
+            description: 'Failed to delete note. Please try again.',
           });
         }
         break;
@@ -126,7 +124,8 @@ const ViewNote = () => {
 
   return (
     <Layout>
-      <div className="animate-fade-in">
+      {contextHolder}
+      <div style={{ animation: 'fadeIn 0.3s ease-in-out' }}>
         <UIRenderer
           schema={uiSchema}
           isLoading={loading}

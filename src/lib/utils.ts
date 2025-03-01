@@ -45,13 +45,13 @@ export function findComponentById(schema: UISchema, id: string): UIComponent | n
       }
       
       // Search in nested components
-      if ('children' in component) {
-        const found = search(component.children);
+      if ('children' in component && Array.isArray(component.children)) {
+        const found = search(component.children as UIComponent[]);
         if (found) return found;
       }
       
-      if ('items' in component) {
-        const found = search(component.items);
+      if ('items' in component && Array.isArray(component.items)) {
+        const found = search(component.items as UIComponent[]);
         if (found) return found;
       }
     }
@@ -70,22 +70,22 @@ export function updateComponentById(
   const updateInArray = (components: UIComponent[]): UIComponent[] => {
     return components.map(component => {
       if (component.id === id) {
-        return { ...component, ...update };
+        return { ...component, ...update } as UIComponent;
       }
       
       // Update in nested components
-      if ('children' in component) {
+      if ('children' in component && Array.isArray(component.children)) {
         return {
           ...component,
-          children: updateInArray(component.children)
-        };
+          children: updateInArray(component.children as UIComponent[])
+        } as UIComponent;
       }
       
-      if ('items' in component) {
+      if ('items' in component && Array.isArray(component.items)) {
         return {
           ...component,
-          items: updateInArray(component.items)
-        };
+          items: updateInArray(component.items as UIComponent[])
+        } as UIComponent;
       }
       
       return component;

@@ -1,17 +1,17 @@
 
 import { useState, useEffect } from 'react';
+import { notification } from 'antd';
 import Layout from '@/components/Layout';
 import UIRenderer from '@/components/UIRenderer';
 import NoteList from '@/components/NoteList';
 import { api } from '@/lib/api';
 import { Note, UISchema } from '@/types';
-import { useToast } from '@/components/ui/use-toast';
 
 const Index = () => {
-  const { toast } = useToast();
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [uiSchema, setUiSchema] = useState<UISchema>();
+  const [api, contextHolder] = notification.useNotification();
 
   // Fetch initial data
   useEffect(() => {
@@ -35,10 +35,9 @@ const Index = () => {
         setNotes(notesResponse.data || []);
       } catch (error) {
         console.error('Error fetching data:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load notes. Please try again.",
-          variant: "destructive",
+        api.error({
+          message: 'Error',
+          description: 'Failed to load notes. Please try again.',
         });
       } finally {
         setLoading(false);
@@ -46,7 +45,7 @@ const Index = () => {
     };
 
     fetchData();
-  }, [toast]);
+  }, []);
 
   // Handle delete note
   const handleDeleteNote = async (id: string) => {
@@ -60,10 +59,9 @@ const Index = () => {
       setNotes(notes.filter(note => note.id !== id));
     } catch (error) {
       console.error('Error deleting note:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete note. Please try again.",
-        variant: "destructive",
+      api.error({
+        message: 'Error',
+        description: 'Failed to delete note. Please try again.',
       });
     }
   };
@@ -85,7 +83,8 @@ const Index = () => {
 
   return (
     <Layout>
-      <div className="animate-fade-in">
+      {contextHolder}
+      <div style={{ animation: 'fadeIn 0.3s ease-in-out' }}>
         {uiSchema && (
           <UIRenderer
             schema={uiSchema}

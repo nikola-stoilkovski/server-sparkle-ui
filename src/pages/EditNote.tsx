@@ -1,20 +1,20 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { notification } from 'antd';
 import Layout from '@/components/Layout';
 import UIRenderer from '@/components/UIRenderer';
 import { api } from '@/lib/api';
 import { Note, UISchema, UpdateNoteInput } from '@/types';
 import { updateComponentById } from '@/lib/utils';
-import { useToast } from '@/components/ui/use-toast';
 
 const EditNote = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [note, setNote] = useState<Note | null>(null);
   const [loading, setLoading] = useState(true);
   const [uiSchema, setUiSchema] = useState<UISchema>();
+  const [api, contextHolder] = notification.useNotification();
 
   // Fetch note and UI schema
   useEffect(() => {
@@ -62,10 +62,9 @@ const EditNote = () => {
         }
       } catch (error) {
         console.error('Error fetching note:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load note. Please try again.",
-          variant: "destructive",
+        api.error({
+          message: 'Error',
+          description: 'Failed to load note. Please try again.',
         });
         navigate('/');
       } finally {
@@ -74,7 +73,7 @@ const EditNote = () => {
     };
 
     fetchData();
-  }, [id, navigate, toast]);
+  }, [id, navigate]);
 
   // Handle UI actions
   const handleAction = async (action: string, payload?: any) => {
@@ -88,10 +87,9 @@ const EditNote = () => {
           const { title, content } = payload.formData;
           
           if (!title || !content) {
-            toast({
-              title: "Validation Error",
-              description: "Title and content are required.",
-              variant: "destructive",
+            api.error({
+              message: 'Validation Error',
+              description: 'Title and content are required.',
             });
             return;
           }
@@ -111,10 +109,9 @@ const EditNote = () => {
           navigate(`/note/${id}`);
         } catch (error) {
           console.error('Error updating note:', error);
-          toast({
-            title: "Error",
-            description: "Failed to update note. Please try again.",
-            variant: "destructive",
+          api.error({
+            message: 'Error',
+            description: 'Failed to update note. Please try again.',
           });
         }
         break;
@@ -127,7 +124,8 @@ const EditNote = () => {
 
   return (
     <Layout>
-      <div className="animate-fade-in">
+      {contextHolder}
+      <div style={{ animation: 'fadeIn 0.3s ease-in-out' }}>
         <UIRenderer
           schema={uiSchema}
           isLoading={loading}

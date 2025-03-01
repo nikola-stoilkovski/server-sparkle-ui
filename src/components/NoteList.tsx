@@ -1,9 +1,12 @@
 
 import { useState, useEffect } from 'react';
+import { Typography, Empty, Row, Col } from 'antd';
 import NoteItem from './NoteItem';
 import { api } from '@/lib/api';
 import { Note } from '@/types';
 import { updateComponentById } from '@/lib/utils';
+
+const { Title, Paragraph } = Typography;
 
 interface NoteListProps {
   notes: Note[];
@@ -18,7 +21,7 @@ const NoteList = ({ notes, onDelete, onUpdateSchema }: NoteListProps) => {
       const noteItems = notes.map((note) => ({
         id: `note-item-${note.id}`,
         type: 'card' as const,
-        className: 'glass-card cursor-pointer group animate-scale-up',
+        style: { cursor: 'pointer' },
         events: {
           click: {
             action: 'NAVIGATE',
@@ -31,7 +34,6 @@ const NoteList = ({ notes, onDelete, onUpdateSchema }: NoteListProps) => {
             type: 'text' as const,
             content: note.title,
             variant: 'h3' as const,
-            className: 'text-xl font-medium mb-2'
           },
           {
             id: `note-content-${note.id}`,
@@ -40,14 +42,13 @@ const NoteList = ({ notes, onDelete, onUpdateSchema }: NoteListProps) => {
               ? `${note.content.substring(0, 150)}...` 
               : note.content,
             variant: 'p' as const,
-            className: 'text-muted-foreground mb-4'
           },
           {
             id: `note-date-${note.id}`,
             type: 'text' as const,
             content: new Date(note.updatedAt).toLocaleDateString(),
-            variant: 'p' as const,
-            className: 'text-xs text-muted-foreground'
+            variant: 'span' as const,
+            style: { fontSize: '12px', color: 'rgba(0, 0, 0, 0.45)' }
           }
         ]
       }));
@@ -59,24 +60,27 @@ const NoteList = ({ notes, onDelete, onUpdateSchema }: NoteListProps) => {
 
   if (notes.length === 0) {
     return (
-      <div className="text-center py-12 animate-fade-in">
-        <h3 className="text-xl font-medium text-muted-foreground">No notes yet</h3>
-        <p className="text-muted-foreground mt-2">Create your first note to get started</p>
-      </div>
+      <Empty
+        description="No notes yet"
+        style={{ margin: '48px 0' }}
+      >
+        <Paragraph type="secondary">Create your first note to get started</Paragraph>
+      </Empty>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <Row gutter={[16, 16]}>
       {notes.map((note, index) => (
-        <NoteItem 
-          key={note.id} 
-          note={note} 
-          index={index} 
-          onDelete={onDelete} 
-        />
+        <Col xs={24} sm={12} lg={8} key={note.id}>
+          <NoteItem 
+            note={note} 
+            index={index} 
+            onDelete={onDelete} 
+          />
+        </Col>
       ))}
-    </div>
+    </Row>
   );
 };
 
