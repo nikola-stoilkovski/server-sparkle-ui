@@ -2,14 +2,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UIComponent, UISchema } from '@/types';
-import { 
-  Typography, Button, Input, Form, Card, Skeleton, Space, 
-  Divider, Image as AntImage, notification
-} from 'antd';
 import { cn } from '@/lib/utils';
-
-const { Title, Paragraph, Text } = Typography;
-const { TextArea } = Input;
+import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface UIRendererProps {
   schema?: UISchema;
@@ -20,16 +20,15 @@ interface UIRendererProps {
 
 export const UIRenderer = ({ schema, isLoading, onAction, data = {} }: UIRendererProps) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [formState, setFormState] = useState<Record<string, any>>({});
-  const [form] = Form.useForm();
   
   // Update form state with data
   useEffect(() => {
     if (data && Object.keys(data).length) {
       setFormState(data);
-      form.setFieldsValue(data);
     }
-  }, [data, form]);
+  }, [data]);
 
   // Handle actions from UI events
   const handleAction = (action: string, payload?: any) => {
@@ -50,15 +49,22 @@ export const UIRenderer = ({ schema, isLoading, onAction, data = {} }: UIRendere
   };
 
   // Handle form submission
-  const handleFormSubmit = (action: string, payload?: any) => {
+  const handleFormSubmit = (e: React.FormEvent, action: string, payload?: any) => {
+    e.preventDefault();
     onAction(action, { ...payload, formData: formState });
   };
 
   // Render loading skeleton
   if (isLoading || !schema) {
     return (
-      <div style={{ padding: 16 }}>
-        <Skeleton active title paragraph={{ rows: 4 }} />
+      <div className="space-y-6 p-4">
+        <Skeleton className="h-12 w-3/4" />
+        <Skeleton className="h-8 w-1/2" />
+        <div className="space-y-4 mt-8">
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </div>
       </div>
     );
   }
@@ -74,27 +80,27 @@ export const UIRenderer = ({ schema, isLoading, onAction, data = {} }: UIRendere
     // Render based on component type
     switch (component.type) {
       case 'text': {
-        const { content, variant = 'p', style, ...rest } = component;
+        const { content, variant = 'p', className, ...rest } = component;
         const finalContent = componentData.content || content;
         
         switch (variant) {
           case 'h1':
-            return <Title level={1} {...rest}>{finalContent}</Title>;
+            return <h1 className={cn("text-4xl font-bold", className)} {...rest}>{finalContent}</h1>;
           case 'h2':
-            return <Title level={2} {...rest}>{finalContent}</Title>;
+            return <h2 className={cn("text-3xl font-bold", className)} {...rest}>{finalContent}</h2>;
           case 'h3':
-            return <Title level={3} {...rest}>{finalContent}</Title>;
+            return <h3 className={cn("text-2xl font-bold", className)} {...rest}>{finalContent}</h3>;
           case 'h4':
-            return <Title level={4} {...rest}>{finalContent}</Title>;
+            return <h4 className={cn("text-xl font-semibold", className)} {...rest}>{finalContent}</h4>;
           case 'span':
-            return <Text {...rest}>{finalContent}</Text>;
+            return <span className={className} {...rest}>{finalContent}</span>;
           default:
-            return <Paragraph {...rest}>{finalContent}</Paragraph>;
+            return <p className={className} {...rest}>{finalContent}</p>;
         }
       }
       
       case 'button': {
-        const { content, variant = 'primary', style, events, ...rest } = component;
+        const { content, variant = 'primary', className, events, ...rest } = component;
         
         const handleClick = () => {
           if (events?.click) {
@@ -102,33 +108,11 @@ export const UIRenderer = ({ schema, isLoading, onAction, data = {} }: UIRendere
           }
         };
         
-        let buttonType: "primary" | "default" | "dashed" | "link" | "text" = "default";
-        let danger = false;
-        
-        switch (variant) {
-          case 'primary':
-            buttonType = 'primary';
-            break;
-          case 'outline':
-            buttonType = 'default';
-            break;
-          case 'ghost':
-            buttonType = 'text';
-            break;
-          case 'destructive':
-            buttonType = 'primary';
-            danger = true;
-            break;
-          default:
-            buttonType = 'default';
-        }
-        
         return (
           <Button 
-            type={buttonType}
-            danger={danger}
+            variant={variant as any} 
+            className={className} 
             onClick={handleClick}
-            style={style}
             {...rest}
           >
             {content}
@@ -144,7 +128,7 @@ export const UIRenderer = ({ schema, isLoading, onAction, data = {} }: UIRendere
           defaultValue, 
           inputType = 'text',
           validation,
-          style,
+          className,
           ...rest
         } = component;
         
@@ -152,92 +136,79 @@ export const UIRenderer = ({ schema, isLoading, onAction, data = {} }: UIRendere
           ? formState[name] 
           : (componentData.defaultValue || defaultValue || '');
         
-        const inputComponent = inputType === 'textarea' ? (
-          <TextArea
-            placeholder={placeholder}
-            value={value}
-            onChange={(e) => handleInputChange(name, e.target.value)}
-            style={{ minHeight: 120, ...style }}
-            {...rest}
-          />
-        ) : (
-          <Input
-            type={inputType}
-            placeholder={placeholder}
-            value={value}
-            onChange={(e) => handleInputChange(name, e.target.value)}
-            style={style}
-            {...rest}
-          />
-        );
-        
         return (
-          <Form.Item
-            label={label}
-            name={name}
-            rules={validation?.required ? [{ required: true, message: `${label} is required` }] : undefined}
-          >
-            {inputComponent}
-          </Form.Item>
+          <div className={cn("space-y-2", className)}>
+            {label && <Label htmlFor={name}>{label}</Label>}
+            
+            {inputType === 'textarea' ? (
+              <Textarea
+                id={name}
+                name={name}
+                placeholder={placeholder}
+                value={value}
+                onChange={(e) => handleInputChange(name, e.target.value)}
+                required={validation?.required}
+                className="min-h-32 resize-y"
+                {...rest}
+              />
+            ) : (
+              <Input
+                id={name}
+                name={name}
+                type={inputType}
+                placeholder={placeholder}
+                value={value}
+                onChange={(e) => handleInputChange(name, e.target.value)}
+                required={validation?.required}
+                {...rest}
+              />
+            )}
+          </div>
         );
       }
       
       case 'card': {
-        const { children, style, ...rest } = component;
+        const { children, className, ...rest } = component;
         
         return (
-          <Card style={style} {...rest}>
-            {children.map((child) => (
-              <div key={child.id}>{renderComponent(child)}</div>
-            ))}
+          <Card className={cn("overflow-hidden", className)} {...rest}>
+            <div className="p-6">
+              {children.map((child) => (
+                <div key={child.id}>{renderComponent(child)}</div>
+              ))}
+            </div>
           </Card>
         );
       }
       
       case 'list': {
-        const { items, layout = 'vertical', style, ...rest } = component;
+        const { items, layout = 'vertical', className, ...rest } = component;
         
         // Get dynamically loaded items if available
         const listItems = componentData.items || items || [];
         
-        const itemsList = listItems.map((item) => (
-          <div key={item.id} style={{ width: '100%' }}>
-            {renderComponent(item)}
-          </div>
-        ));
+        const layoutClasses = {
+          vertical: "flex flex-col space-y-4",
+          horizontal: "flex flex-row space-x-4 overflow-x-auto",
+          grid: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4",
+        };
         
-        if (layout === 'horizontal') {
-          return (
-            <div style={{ display: 'flex', overflowX: 'auto', gap: 16, ...style }} {...rest}>
-              {itemsList}
-            </div>
-          );
-        } else if (layout === 'grid') {
-          return (
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
-              gap: 16,
-              ...style 
-            }} {...rest}>
-              {itemsList}
-            </div>
-          );
-        }
-        
-        // Default to vertical
         return (
-          <Space direction="vertical" style={{ width: '100%', ...style }} {...rest}>
-            {itemsList}
-          </Space>
+          <div className={cn(layoutClasses[layout], className)} {...rest}>
+            {listItems.map((item) => (
+              <div key={item.id} className="w-full">
+                {renderComponent(item)}
+              </div>
+            ))}
+          </div>
         );
       }
       
       case 'container': {
-        const { children, style, ...rest } = component;
+        const { children, className, ...rest } = component;
         
         return (
-          <div style={style} {...rest}>
+          <div className={className} {...rest}>
             {children.map((child) => (
               <div key={child.id}>{renderComponent(child)}</div>
             ))}
@@ -250,14 +221,14 @@ export const UIRenderer = ({ schema, isLoading, onAction, data = {} }: UIRendere
           children, 
           submitLabel = 'Submit', 
           cancelLabel,
-          style,
+          className, 
           events,
           ...rest 
         } = component;
         
-        const handleSubmit = () => {
+        const handleSubmit = (e: React.FormEvent) => {
           if (events?.submit) {
-            handleFormSubmit(events.submit.action, events.submit.payload);
+            handleFormSubmit(e, events.submit.action, events.submit.payload);
           }
         };
         
@@ -268,43 +239,42 @@ export const UIRenderer = ({ schema, isLoading, onAction, data = {} }: UIRendere
         };
         
         return (
-          <Form 
-            form={form}
-            layout="vertical"
-            onFinish={handleSubmit}
-            style={style}
+          <form 
+            className={className} 
+            onSubmit={handleSubmit}
             {...rest}
           >
             {children.map((child) => (
               <div key={child.id}>{renderComponent(child)}</div>
             ))}
             
-            <Form.Item>
-              <Space>
-                <Button type="primary" htmlType="submit">
-                  {submitLabel}
+            <div className="flex justify-end space-x-2 mt-6">
+              {cancelLabel && (
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handleCancel}
+                >
+                  {cancelLabel}
                 </Button>
-                {cancelLabel && (
-                  <Button onClick={handleCancel}>
-                    {cancelLabel}
-                  </Button>
-                )}
-              </Space>
-            </Form.Item>
-          </Form>
+              )}
+              <Button type="submit">{submitLabel}</Button>
+            </div>
+          </form>
         );
       }
 
       case 'image': {
-        const { src, alt, width, height, style, ...rest } = component;
+        const { src, alt, width, height, className, ...rest } = component;
         
         return (
-          <AntImage 
+          <img 
             src={componentData.src || src} 
             alt={componentData.alt || alt}
             width={width} 
             height={height}
-            style={style}
+            className={cn("rounded-md", className)}
+            loading="lazy"
             {...rest}
           />
         );

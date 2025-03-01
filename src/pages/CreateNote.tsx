@@ -1,17 +1,17 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { notification } from 'antd';
 import Layout from '@/components/Layout';
 import UIRenderer from '@/components/UIRenderer';
 import { api } from '@/lib/api';
 import { CreateNoteInput, UISchema } from '@/types';
+import { useToast } from '@/components/ui/use-toast';
 
 const CreateNote = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [uiSchema, setUiSchema] = useState<UISchema>();
-  const [api, contextHolder] = notification.useNotification();
 
   // Fetch UI schema
   useEffect(() => {
@@ -26,9 +26,10 @@ const CreateNote = () => {
         setUiSchema(response.data);
       } catch (error) {
         console.error('Error fetching UI schema:', error);
-        api.error({
-          message: 'Error',
-          description: 'Failed to load form. Please try again.',
+        toast({
+          title: "Error",
+          description: "Failed to load form. Please try again.",
+          variant: "destructive",
         });
       } finally {
         setLoading(false);
@@ -36,7 +37,7 @@ const CreateNote = () => {
     };
 
     fetchSchema();
-  }, []);
+  }, [toast]);
 
   // Handle UI actions
   const handleAction = async (action: string, payload?: any) => {
@@ -50,9 +51,10 @@ const CreateNote = () => {
           const { title, content } = payload.formData;
           
           if (!title || !content) {
-            api.error({
-              message: 'Validation Error',
-              description: 'Title and content are required.',
+            toast({
+              title: "Validation Error",
+              description: "Title and content are required.",
+              variant: "destructive",
             });
             return;
           }
@@ -67,9 +69,10 @@ const CreateNote = () => {
           navigate('/');
         } catch (error) {
           console.error('Error creating note:', error);
-          api.error({
-            message: 'Error',
-            description: 'Failed to create note. Please try again.',
+          toast({
+            title: "Error",
+            description: "Failed to create note. Please try again.",
+            variant: "destructive",
           });
         }
         break;
@@ -82,8 +85,7 @@ const CreateNote = () => {
 
   return (
     <Layout>
-      {contextHolder}
-      <div style={{ animation: 'fadeIn 0.3s ease-in-out' }}>
+      <div className="animate-fade-in">
         <UIRenderer
           schema={uiSchema}
           isLoading={loading}

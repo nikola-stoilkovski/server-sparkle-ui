@@ -1,9 +1,6 @@
 
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Layout as AntLayout, theme } from 'antd';
-
-const { Content } = AntLayout;
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -13,7 +10,6 @@ const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   const [displayLocation, setDisplayLocation] = useState(location);
   const [transitionStage, setTransitionStage] = useState('fadeIn');
-  const { token } = theme.useToken();
 
   useEffect(() => {
     if (location.pathname !== displayLocation.pathname) {
@@ -26,18 +22,17 @@ const Layout = ({ children }: LayoutProps) => {
   }, [location, displayLocation]);
 
   return (
-    <AntLayout style={{ minHeight: '100vh', background: token.colorBgContainer }}>
-      <Content style={{ margin: '24px auto', maxWidth: '1200px', padding: '0 24px' }}>
+    <div className="flex flex-col min-h-screen">
+      <main className="flex-1 container mx-auto px-4 py-8">
         <div
-          style={{
-            transition: 'opacity 300ms',
-            opacity: transitionStage === 'fadeIn' ? 1 : 0,
-          }}
+          className={`transition-opacity duration-300 ${
+            transitionStage === 'fadeIn' ? 'opacity-100' : 'opacity-0'
+          }`}
         >
           {children}
         </div>
-      </Content>
-    </AntLayout>
+      </main>
+    </div>
   );
 };
 
